@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SkillLink Kenya — Hire Skills. Sell Your Talent.</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root{--bg:#0a0a0a;--card:#151515;--card2:#1c1c1c;--green:#00e676;--red:#ff4757;--blue:#3aa0ff;--txt:#f1f1f1;--mut:#9aa0a6}
+  *{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',Arial,sans-serif}
+  body{background:var(--bg);color:var(--txt)}
+  nav{background:#000;border-bottom:2px solid var(--green);display:flex;justify-content:space-between;align-items:center;padding:12px 5%;flex-wrap:wrap;gap:8px;position:sticky;top:0;z-index:50}
+  .logo{font-size:21px;font-weight:800;cursor:pointer}.logo b{color:var(--green)}.logo span{color:var(--red)}
+  nav button{background:none;border:none;color:var(--txt);margin-left:12px;cursor:pointer;font-size:14px}nav button:hover{color:var(--green)}
+  .page{display:none;padding:28px 5%;max-width:1100px;margin:auto}.page.active{display:block;animation:fade .3s}
+  @keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1}}
+  h1{font-size:29px;margin-bottom:10px}.muted{color:var(--mut)}
+  .card{background:var(--card);border:1px solid #2a2a2a;border-radius:14px;padding:22px;margin-bottom:16px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px}
+  input,select,textarea{width:100%;padding:12px;margin:6px 0 14px;border:1px solid #333;border-radius:8px;font-size:15px;background:#111;color:#fff}
+  input:focus{outline:none;border-color:var(--green)}
+  .btn{background:var(--green);border:none;color:#000;font-weight:800;padding:13px 22px;border-radius:8px;cursor:pointer;font-size:15px}
+  .btn.red{background:var(--red);color:#fff}.btn.blue{background:var(--blue);color:#fff}.btn.out{background:none;border:2px solid var(--green);color:var(--green)}
+  .btn.sm{padding:6px 10px;font-size:12px}
+  .pill{display:inline-block;border-radius:20px;padding:4px 12px;font-size:12px;font-weight:700;margin-bottom:8px}
+  .pill.g{background:rgba(0,230,118,.15);color:var(--green)}.pill.r{background:rgba(255,71,87,.15);color:var(--red)}.pill.b{background:rgba(58,160,255,.15);color:var(--blue)}
+  .price{font-weight:800;color:var(--red);font-size:19px}
+  .roles{display:flex;gap:14px}.roles label{flex:1;border:2px solid #333;border-radius:12px;padding:14px;cursor:pointer;text-align:center}
+  .roles input{display:none}.roles label:has(input:checked){border-color:var(--green);background:rgba(0,230,118,.08)}
+  .tabs{display:flex;gap:8px;margin-bottom:18px}.tabs button{flex:1;padding:11px;border-radius:8px;border:2px solid #333;background:none;color:var(--mut);font-weight:700;cursor:pointer}
+  .tabs button.on{border-color:var(--green);color:var(--green);background:rgba(0,230,118,.08)}
+  .hero{background:radial-gradient(circle at 15% 20%,rgba(0,230,118,.25),transparent 40%),radial-gradient(circle at 85% 70%,rgba(58,160,255,.22),transparent 40%),radial-gradient(circle at 60% 10%,rgba(255,71,87,.18),transparent 35%),linear-gradient(135deg,#000,#062b18);border-radius:18px;padding:50px 38px;margin-bottom:26px;border:1px solid #0d2b1e}
+  .hero h1{font-size:37px;color:#fff}.hero h1 span{color:var(--green)}.hero h1 em{color:var(--red);font-style:normal}.hero h1 i{color:var(--blue);font-style:normal}
+  .hero p{font-size:17px;margin:14px 0 22px;color:#cfe8da;max-width:640px}
+  .catlist{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}.catlist span{padding:7px 15px;border-radius:20px;font-size:13px;font-weight:600;cursor:pointer}
+  .cg{background:rgba(0,230,118,.12);color:var(--green)}.cr{background:rgba(255,71,87,.12);color:var(--red)}.cb{background:rgba(58,160,255,.12);color:var(--blue)}
+  .stat{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:24px}.stat .card{flex:1;min-width:150px;text-align:center}.stat b{font-size:22px;display:block}
+  table{width:100%;border-collapse:collapse}th,td{padding:10px;border-bottom:1px solid #262626;text-align:left;font-size:13px}th{color:var(--green)}
+  .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:100;align-items:center;justify-content:center;padding:16px}
+  .overlay.on{display:flex}.modal{background:var(--card2);border:2px solid var(--green);border-radius:16px;max-width:440px;width:100%;padding:26px;max-height:92vh;overflow:auto}
+  .modal h2{color:var(--green)}.amt{font-size:32px;font-weight:800;color:var(--red);margin:6px 0}
+  .paybox{background:#000;border-radius:10px;padding:14px;margin:12px 0;border:1px dashed var(--green)}.paybox b{color:var(--green)}
+  footer{text-align:center;padding:26px;color:#667;font-size:13px;border-top:1px solid #222;margin-top:30px}
+  .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--green);color:#000;font-weight:800;padding:12px 22px;border-radius:10px;z-index:200;display:none;max-width:90%;text-align:center;white-space:pre-line}
+  @media(max-width:600px){.hero{padding:32px 20px}.hero h1{font-size:26px}}
+</style>
+</head>
+<body>
+<nav>
+  <div class="logo" onclick="show('home')">Skill<b>Link</b><span>KE</span></div>
+  <div id="navlinks"></div>
+</nav>
+
+<div class="page active" id="home">
+  <div class="hero">
+    <h1>Hire <span>skills</span>. Sell your <em>talent</em>. Earn in <i>KShs</i>.</h1>
+    <p>Kenya's marketplace — <b id="catN"></b> categories: editors, designers, fundis, caterers, MCs, tutors, cyber services and more. One-time KShs 650 membership.</p>
+    <button class="btn" onclick="show('auth')">Join Now — KShs 650</button>
+    <button class="btn out" onclick="show('browse')">Browse Categories</button>
+    <div class="catlist" id="homecats"></div>
+  </div>
+</div>
+
+<div class="page" id="auth">
+  <div class="card" style="max-width:480px;margin:auto">
+    <div class="tabs"><button id="tabLogin" onclick="authMode('login')">Login</button><button id="tabReg" class="on" onclick="authMode('reg')">Create Account</button></div>
+    <div id="regFields">
+      <label>Full name</label><input id="rName" placeholder="e.g. Brian Otieno">
+      <label>Phone (M-Pesa / WhatsApp)</label><input id="rPhone" inputmode="tel" placeholder="07XX XXX XXX">
+    </div>
+    <label>Email</label><input id="rEmail" type="email" placeholder="you@email.com">
+    <label>Password</label><input id="rPass" type="password" placeholder="Min 6 characters">
+    <div id="roleWrap">
+      <label>I am joining as a:</label>
+      <div class="roles">
+        <label><input type="radio" name="role" value="client" checked>🛒 Client<br><small class="muted">I want to hire</small></label>
+        <label><input type="radio" name="role" value="merchant">💼 Merchant<br><small class="muted">I sell services</small></label>
+      </div>
+      <label style="margin-top:14px">Referral code (optional)</label><input id="rRef" placeholder="e.g. BRIAN123">
+    </div>
+    <button id="authBtn" class="btn" style="width:100%" onclick="doAuth()">Create Account → Pay KShs 650</button>
+  </div>
+</div>
+
+<div class="page" id="browse">
+  <h1>Browse <span style="color:var(--green)">Services</span></h1>
+  <input id="cSearch" placeholder="🔍 Search categories: 'plumber','KRA','MC'..." oninput="renderChips()">
+  <div class="catlist" id="catChips" style="margin-bottom:18px"></div>
+  <input id="search" placeholder="🔍 Search services..." oninput="renderServices()">
+  <select id="catFilter" onchange="renderServices()"><option value="">All categories</option></select>
+  <div class="grid" id="svcGrid"></div>
+</div>
+
+<div class="page" id="dash"></div>
+<div class="page" id="affiliate"></div>
+<div class="page" id="admin"></div>
+
+<footer>SkillLinkKE © 2025 · v5.0 REAL · Supabase + M-Pesa STK · Made in Kenya 🇰🇪</footer>
+
+<div class="overlay" id="payOv"><div class="modal">
+  <h2>⚡ Activate your account</h2><p class="muted">One-time membership payment.</p>
+  <div class="amt">KShs 650 <span style="font-size:15px;color:var(--blue)">(~$5)</span></div>
+  <label>Your M-Pesa phone number</label><input id="payPhone" inputmode="tel" placeholder="07XX XXX XXX">
+  <button class="btn" style="width:100%" onclick="paySTK()">📲 Pay with M-Pesa (STK Push)</button>
+  <div id="payStatus" class="muted" style="text-align:center;margin:10px 0;font-size:13px"></div>
+  <div class="paybox">Or pay manually: M-Pesa → Paybill<br>Business No: <b id="pbNum">—</b> · Account: <b id="pbAcc">SKILLLINK</b> · <b>KShs 650</b></div>
+  <label>Enter Paybill confirmation code</label><input id="payCode" placeholder="e.g. SGH7YT2X9P" style="text-transform:uppercase">
+  <button class="btn blue" style="width:100%" onclick="payManual()">I paid via Paybill — submit code for verification</button>
+  <button class="btn out" style="width:100%;margin-top:10px" onclick="closePay()">Cancel</button>
+</div></div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ⚙️ CONFIG — replace both values from Supabase → Settings → API */
+const SUPABASE_URL = "https://YOUR-REF.supabase.co";
+const SUPABASE_ANON = "YOUR-ANON-KEY";
+const PAYBILL = "123456";           /* ← your real Paybill (for manual payments) */
+const PAYBILL_ACC = "SKILLLINK";
+const FEE = 650, COMM = 0.20, REF_BONUS = 200;
+
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+let me = null, mem = null, cache = {};
+
+const CAT_GROUPS = {
+  "💻 Digital & Tech":["Web Design & Development","Mobile App Development","Programming & Software","Graphic Design & Branding","Video Editing & Production","Animation & Motion Graphics","Photography & Videography","Drone & Aerial Services","Social Media Management","Digital Marketing & Ads","SEO & Content Writing","Data Entry & Virtual Assistant","Cyber & eCitizen Services (KRA, HELB)","Computer & Phone Repair","CCTV & Security Installation"],
+  "🏠 Home & Trades":["Plumbing","Electrical Wiring & Installation","Solar Panel Installation","Carpentry & Furniture Making","Welding & Metal Fabrication","Masonry & Construction","Painting & Interior Decor","House Cleaning & Fumigation","Laundry & Dry Cleaning","Gardening & Landscaping","Pest Control","Movers & Relocation","Appliance Repair","Water & Borehole Services","Roofing & Waterproofing"],
+  "🎉 Events & Beauty":["Event Planning & Coordination","MC & Event Hosting","DJ & Sound System Hire","Tent & Chairs Hire","Catering & Food Services","Cake Baking & Sugar Art","Makeup Artistry","Hairdressing & Barbering","Nails & Beauty Therapy","Tailoring & Fashion Design","Wedding Services","Balloon & Party Decor"],
+  "💼 Business & Professional":["Accounting & Bookkeeping","KRA Tax Filing & Compliance","Business Plans & Company Registration","Legal Services & Contracts","Real Estate & Land Selling","Land Surveying","Architecture & Drafting","Printing, Branding & Signage","Transport, Boda & Courier","Car Repair & Mechanic"],
+  "🎓 Education & Wellness":["Tuition & CBC Lessons","Driving Lessons","Music & Instrument Lessons","Languages & Translation (Kiswahili/English)","CV Writing & Interview Coaching","Fitness & Personal Training","Nutrition & Diet Planning","Counseling & Mentorship"],
+  "🌱 Agriculture":["Farming & Agribusiness Consultancy","Veterinary & Animal Care"]};
+const CATS = Object.values(CAT_GROUPS).flat();
+
+const $=id=>document.getElementById(id);
+const esc=s=>(s+"").replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function toast(m){const t=$("toast");t.textContent=m;t.style.display="block";clearTimeout(t._h);t._h=setTimeout(()=>t.style.display="none",4000);}
+const normPhone=v=>{let p=(v||"").replace(/\D/g,"");if(p.startsWith("0"))p="254"+p.slice(1);return /^254(7|1)\d{8}$/.test(p)?p:null;};
+
+ $("pbNum").textContent=PAYBILL;$("pbAcc").textContent=PAYBILL_ACC;$("catN").textContent=CATS.length;
+const catSel=$("catFilter");
+for(const[g,arr]of Object.entries(CAT_GROUPS))catSel.innerHTML+=`<optgroup label="${g}">`+arr.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join("")+"</optgroup>";
+ $("homecats").innerHTML=CATS.slice(0,20).map((c,i)=>`<span class="${["cg","cr","cb"][i%3]}" onclick="filterCat('${esc(c)}')">${esc(c)}</span>`).join("")+`<span class="cb" onclick="show('browse')">+ ${CATS.length-20} more →</span>`;
+
+/* ---------- AUTH ---------- */
+let mode="reg";
+function authMode(m){mode=m;
+  $("tabLogin").classList.toggle("on",m==="login");$("tabReg").classList.toggle("on",m==="reg");
+  $("regFields").style.display=m==="reg"?"block":"none";$("roleWrap").style.display=m==="reg"?"block":"none";
+  $("authBtn").innerText=m==="reg"?"Create Account → Pay KShs 650":"Login";}
+async function doAuth(){
+  const email=$("rEmail").value.trim().toLowerCase(),pass=$("rPass").value;
+  if(!email||pass.length<6)return toast("Enter email and a 6+ character password.");
+  if(mode==="login"){
+    const{error}=await sb.auth.signInWithPassword({email,password:pass});
+    if(error)return toast("❌ "+error.message);
+    await loadMe();routeAfterAuth();
+  }else{
+    const name=$("rName").value.trim(),phone=normPhone($("rPhone").value);
+    if(!name)return toast("Enter your full name.");
+    if(!phone)return toast("Enter a valid Kenyan phone: 07XX / 01XX / 2547XX…");
+    const role=document.querySelector('input[name=role]:checked').value;
+    const ref=$("rRef").value.trim().toUpperCase()||localStorage.getItem("slk_ref")||null;
+    const{error}=await sb.auth.signUp({email,password:pass,options:{data:{name,phone,role,ref}}});
+    if(error)return toast("❌ "+(error.message.includes("already")?"Email already registered — switch to the Login tab.":error.message));
+    await loadMe();
+    if(!me)return toast("✅ Account created! Check your email to confirm, then login.");
+    openPay();
+  }
+}
+async function loadMe(){
+  const{data:{user}}=await sb.auth.getUser();
+  if(!user){me=null;mem=null;return;}
+  const p=await sb.from("profiles").select("*").eq("id",user.id).single();
+  const m=await sb.from("memberships").select("*").eq("user_id",user.id).single();
+  me=p.data;mem=m.data;
+}
+function isPaid(){return !!(mem&&mem.paid);}
+function routeAfterAuth(){
+  if(!isPaid()&&!me.is_admin){show("home");openPay();return;}
+  if(me.is_admin)show("admin");
+  else if(me.role==="merchant")show("dash");
+  else show("browse");
+}
+function logout(){sb.auth.signOut().then(()=>location.reload());}
+
+/* ---------- PAYMENT ---------- */
+function openPay(){$("payPhone").value=me?me.phone:"";$("payStatus").textContent="";$("payOv").classList.add("on");}
+function closePay(){$("payOv").classList.remove("on");}
+document.addEventListener("keydown",e=>{if(e.key==="Escape")closePay();});
+async function paySTK(){
+  const phone=normPhone($("payPhone").value);
+  if(!phone)return toast("Enter a valid Safaricom number.");
+  $("payStatus").textContent="⏳ Sending STK push to "+phone+" … enter your M-Pesa PIN on the popup.";
+  const{data,error}=await sb.functions.invoke("mpesa-stk",{body:{phone}});
+  if(error||!data||data.error){
+    $("payStatus").textContent="";return toast("❌ "+((data&&data.error)||error.message||"STK failed — use the Paybill option below."));
+  }
+  pollPay(data.CheckoutRequestID);
+}
+function pollPay(id){
+  let n=0;const t=setInterval(async()=>{
+    n++;const{data}=await sb.from("payments").select("status").eq("checkout_request_id",id).single();
+    if(data&&data.status==="success"){clearInterval(t);closePay();await loadMe();toast("🎉 Payment confirmed! Account ACTIVATED.");routeAfterAuth();}
+    else if(data&&data.status==="failed"){clearInterval(t);$("payStatus").textContent="";toast("❌ Payment cancelled or failed. Try again.");}
+    else if(n>40){clearInterval(t);$("payStatus").textContent="Still pending… if no popup arrived, use the Paybill option below.";}
+  },4000);
+}
+async function payManual(){
+  const code=$("payCode").value.trim().toUpperCase();
+  if(code.length<6)return toast("Enter the Paybill confirmation code (min 6 characters).");
+  const{error}=await sb.from("payments").insert({phone:me.phone,amount:FEE,purpose:"membership",status:"pending_manual",method:"Manual: "+code});
+  if(error)return toast("❌ "+error.message);
+  closePay();toast("✅ Submitted! The admin will verify your code — you'll get access shortly.");show("home");
+}
+
+/* ---------- PAGES ---------- */
+function show(id){
+  const pub=["home","browse","auth"];
+  if(!pub.includes(id)&&me&&!isPaid()&&!me.is_admin){show("home");openPay();return;}
+  if(id==="admin"&&!(me&&me.is_admin))id="home";
+  if(id==="auth"&&me){routeAfterAuth();return;}
+  document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
+  $(id).classList.add("active");
+  renderNav();
+  if(id==="browse"){renderChips();renderServices();}
+  if(id==="dash")renderDash();if(id==="affiliate")renderAff();if(id==="admin")renderAdmin();
+  window.scrollTo(0,0);
+}
+function renderNav(){
+  const n=$("navlinks");
+  n.innerHTML=`<button onclick="show('browse')">Browse</button>`;
+  if(!me){n.innerHTML+=`<button onclick="show('auth')" style="color:var(--green)">Login / Join</button>`;return;}
+  if(me.is_admin){n.innerHTML+=`<button onclick="show('admin')" style="color:var(--red)">🛡️ Admin</button><button onclick="logout()">Logout</button>`;return;}
+  if(!isPaid()){n.innerHTML+=`<button onclick="openPay()" style="color:var(--red)">⚠️ Activate KShs 650</button><button onclick="logout()">Logout</button>`;return;}
+  if(me.role==="merchant")n.innerHTML+=`<button onclick="show('dash')">My Services</button>`;
+  n.innerHTML+=`<button onclick="show('affiliate')" style="color:var(--green)">💰 Earn 200</button><button onclick="logout()">Hi, ${esc(me.name.split(" ")[0])}</button>`;
+}
+function renderChips(){
+  const q=($("cSearch").value||"").toLowerCase();let i=0;
+  $("catChips").innerHTML=CATS.filter(c=>!q||c.toLowerCase().includes(q)).map(c=>`<span class="${["cg","cr","cb"][i++%3]}" onclick="filterCat('${esc(c)}')">${esc(c)}</span>`).join("")||`<span class="muted">No category found.</span>`;
+}
+function filterCat(c){$("catFilter").value=c;show("browse");}
+
+async function renderServices(){
+  if(!cache.services){const{data}=await sb.from("services").select("*").order("created_at",{ascending:false});cache.services=data||[];}
+  const q=($("search").value||"").toLowerCase(),cf=catSel.value;
+  const list=cache.services.filter(s=>(!cf||s.category===cf)&&(!q||(s.title+s.description+s.category).toLowerCase().includes(q)));
+  $("svcGrid").innerHTML=list.map((s,i)=>`<div class="card"><span class="pill ${["g","r","b"][i%3]}">${esc(s.category)}</span>
+    <h3>${esc(s.title)}</h3><p class="muted">by ${esc(s.merchant_name)}</p>
+    <p style="margin:8px 0;font-size:14px" class="muted">${esc(s.description)}</p>
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <span class="price">KShs ${Number(s.price).toLocaleString()}</span>
+      <button class="btn sm" style="background:#25d366;color:#fff" onclick="contact('${esc(s.merchant_phone)}','${esc(s.title)}')">WhatsApp</button>
+    </div></div>`).join("")||"<p class='muted'>No services yet — be the first to post one!</p>";
+}
+function contact(ph,title){const p=(ph||"").replace(/\D/g,"");window.open(`https://wa.me/${p.startsWith("0")?"254"+p.slice(1):p}?text=`+encodeURIComponent(`Hi! I found your service "${title}" on SkillLinkKE and I'd like to hire you.`));}
+
+/* ---------- MERCHANT DASHBOARD ---------- */
+async function renderDash(){
+  if(!me||me.role!=="merchant"){$("dash").innerHTML="<div class='card'>Merchant account required.</div>";return;}
+  const{data:mine}=await sb.from("services").select("*").eq("owner",me.id).order("created_at",{ascending:false});
+  const{data:deals}=await sb.from("deals").select("*").eq("owner",me.id).order("created_at",{ascending:false});
+  const owed=(deals||[]).filter(d=>!d.paid).reduce((a,d)=>a+ +d.commission,0);
+  $("dash").innerHTML=`
+    <h1>Merchant <span style="color:var(--green)">Dashboard</span></h1>
+    <p class="muted" style="margin-bottom:14px">You keep <b style="color:var(--green)">80%</b> — SkillLinkKE commission is <b style="color:var(--red)">20%</b> per completed deal.</p>
+    <div class="stat">
+      <div class="card"><b style="color:var(--blue)">${(deals||[]).length}</b><span class="muted">Deals Reported</span></div>
+      <div class="card"><b style="color:var(--red)">KShs ${owed.toLocaleString()}</b><span class="muted">Commission Owed</span></div>
+      <div class="card"><b style="color:var(--green)">KShs ${(me.earnings||0).toLocaleString()}</b><span class="muted">Referral Earnings</span></div>
+    </div>
+    <div class="card"><h3 style="color:var(--red)">📥 Report a Completed Deal</h3>
+      <label>Client name</label><input id="dlClient" placeholder="e.g. Mary Wanjiku">
+      <label>What was the job?</label><input id="dlDesc" placeholder="e.g. Logo design">
+      <label>Deal amount (KShs)</label><input id="dlAmount" type="number" placeholder="e.g. 3000" oninput="$('liveComm').textContent=Math.round((+this.value||0)*${COMM}).toLocaleString()">
+      <button class="btn" onclick="reportDeal()">Submit → Owe 20% (KShs <span id="liveComm">0</span>)</button></div>
+    <div class="card"><h3 style="color:var(--green)">➕ Post a New Service</h3>
+      <label>Service title</label><input id="sT" placeholder="e.g. TikTok Video Editing, 24hr delivery">
+      <label>Category</label><select id="sC">${CATS.map(c=>`<option>${esc(c)}</option>`).join("")}</select>
+      <label>Price (KShs)</label><input id="sP" type="number" placeholder="e.g. 1000">
+      <label>Description</label><textarea id="sD" rows="3" placeholder="What do you deliver? Delivery time? Revisions?"></textarea>
+      <button class="btn" onclick="addSvc()">Publish Service</button></div>
+    <h2 style="margin:16px 0 10px">My Services (${(mine||[]).length})</h2>
+    <div class="card"><table><tr><th>Service</th><th>Price</th><th></th></tr>
+    ${(mine||[]).map(s=>`<tr><td>${esc(s.title)}</td><td style="color:var(--red);font-weight:700">KShs ${Number(s.price).toLocaleString()}</td><td><button class="btn red sm" onclick="delSvc('${s.id}')">Delete</button></td></tr>`).join("")||"<tr><td colspan=3 class='muted'>Nothing yet.</td></tr>"}</table></div>
+    <h2 style="margin:16px 0 10px">My Deals</h2>
+    <div class="card"><table><tr><th>Client</th><th>Amount</th><th>20%</th><th>Status</th></tr>
+    ${(deals||[]).map(d=>`<tr><td>${esc(d.client)} — ${esc(d.job)}</td><td>KShs ${(+d.amount).toLocaleString()}</td><td style="color:var(--red)">KShs ${(+d.commission).toLocaleString()}</td><td>${d.paid?'<b style="color:var(--green)">PAID ✓</b>':'<b style="color:var(--red)">UNPAID</b>'}</td></tr>`).join("")||"<tr><td colspan=4 class='muted'>None yet.</td></tr>"}</table></div>`;
+}
+async function addSvc(){
+  const t=$("sT").value.trim(),p=+$("sP").value,d=$("sD").value.trim();
+  if(!t||!p||!d)return toast("Fill in all fields.");
+  const{error}=await sb.from("services").insert({owner:me.id,title:t,category:$("sC").value,price:p,description:d,merchant_name:me.name,merchant_phone:me.phone});
+  if(error)return toast("❌ "+error.message);
+  cache.services=null;renderDash();toast("✅ Service published!");
+}
+async function delSvc(id){if(!confirm("Delete this service?"))return;await sb.from("services").delete().eq("id",id);cache.services=null;renderDash();}
+async function reportDeal(){
+  const cl=$("dlClient").value.trim(),ds=$("dlDesc").value.trim(),am=+$("dlAmount").value;
+  if(!cl||!ds||!am)return toast("Fill in client, job and amount.");
+  const{error}=await sb.from("deals").insert({owner:me.id,client:cl,job:ds,amount:am,commission:Math.round(am*COMM)});
+  if(error)return toast("❌ "+error.message);
+  renderDash();toast("Deal recorded ✅ Commission: KShs "+Math.round(am*COMM));
+}
+
+/* ---------- AFFILIATE ---------- */
+function renderAff(){
+  const link=location.origin+location.pathname+"?ref="+(me?me.ref_code:"");
+  $("affiliate").innerHTML=`<h1>Affiliate <span style="color:var(--red)">Program</span> 💸</h1>
+    <div class="card"><p>Earn <b style="color:var(--green)">KShs ${REF_BONUS}</b> for every person who joins and pays using your link!</p>
+    <h2 style="color:var(--red);margin:12px 0">${esc(me.ref_code)}</h2>
+    <label>Your referral link</label><input readonly value="${esc(link)}" onclick="this.select()">
+    <p>Earnings so far: <b style="color:var(--green)">KShs ${(me.earnings||0).toLocaleString()}</b> · Paid out via M-Pesa by admin.</p></div>
+    <div class="card"><h3>Where to share</h3><p class="muted">✅ WhatsApp status & groups ✅ TikTok bio ✅ Facebook groups ✅ X / Instagram</p></div>`;
+}
+
+/* ---------- ADMIN ---------- */
+async function renderAdmin(){
+  if(!me||!me.is_admin)return;
+  const[P,M,PA,D,S]=await Promise.all([
+    sb.from("profiles").select("*").order("joined",{ascending:false}),
+    sb.from("memberships").select("*"),
+    sb.from("payments").select("*").order("created_at",{ascending:false}),
+    sb.from("deals").select("*").order("created_at",{ascending:false}),
+    sb.from("services").select("*").order("created_at",{ascending:false})]);
+  const prof=P.data||[],memb=M.data||[],pays=PA.data||[],deals=D.data||[],svcs=S.data||[];
+  const mOf=u=>memb.find(m=>m.user_id===u.id)||{};
+  const revenue=prof.filter(u=>mOf(u).paid).length*FEE;
+  const commOwed=deals.filter(d=>!d.paid).reduce((a,d)=>a+ +d.commission,0);
+  const refOwed=prof.reduce((a,u)=>a+(+u.earnings||0),0);
+  $("admin").innerHTML=`<h1>🛡️ Admin <span style="color:var(--red)">Panel</span></h1>
+    <p class="muted" style="margin-bottom:14px"><button class="btn blue sm" onclick="csvMembers()">⬇ Members CSV</button> <button class="btn blue sm" onclick="csvDeals()">⬇ Deals CSV</button></p>
+    <div class="stat">
+      <div class="card"><b style="color:var(--green)">${prof.length}</b><span class="muted">Members</span></div>
+      <div class="card"><b style="color:var(--red)">KShs ${revenue.toLocaleString()}</b><span class="muted">Membership Revenue</span></div>
+      <div class="card"><b style="color:var(--red)">KShs ${commOwed.toLocaleString()}</b><span class="muted">20% Pending</span></div>
+      <div class="card"><b style="color:var(--blue)">${refOwed? "KShs "+refOwed.toLocaleString():"0"}</b><span class="muted">Referrals Owed</span></div>
+      <div class="card"><b style="color:var(--blue)">${svcs.length}</b><span class="muted">Services</span></div></div>
+    <div class="card"><h3 style="color:var(--blue)">💳 Payments</h3><div style="overflow:auto"><table>
+      <tr><th>Date</th><th>Phone</th><th>Amount</th><th>Status</th><th>Receipt / Code</th><th></th></tr>
+      ${pays.map(p=>`<tr><td>${new Date(p.created_at).toLocaleDateString()}</td><td>${esc(p.phone)}</td><td>KShs ${(+p.amount).toLocaleString()}</td>
+      <td>${p.status==="success"?'<b style="color:var(--green)">SUCCESS</b>':p.status==="pending_manual"?'<b style="color:var(--red)">MANUAL — VERIFY</b>':p.status==="failed"?'<b style="color:var(--red)">FAILED</b>':'⏳ pending'}</td>
+      <td style="font-size:12px">${esc(p.mpesa_receipt||p.method||"—")}</td>
+      <td>${p.status==="pending_manual"?`<button class="btn sm" onclick="verifyPay('${p.user_id}','${esc(p.method)}')">✓ Verify</button>`:""}</td></tr>`).join("")||"<tr><td colspan=6 class='muted'>No payments yet.</td></tr>"}</table></div></div>
+    <div class="card"><h3 style="color:var(--red)">💰 20% Commission Deals</h3><div style="overflow:auto"><table>
+      <tr><th>Date</th><th>Merchant</th><th>Client</th><th>Job</th><th>Amount</th><th>20%</th><th>Status</th><th></th></tr>
+      ${deals.map(d=>{const o=prof.find(u=>u.id===d.owner)||{};return`<tr><td>${new Date(d.created_at).toLocaleDateString()}</td><td>${esc(o.name||"—")}</td><td>${esc(d.client)}</td><td>${esc(d.job)}</td><td>KShs ${(+d.amount).toLocaleString()}</td><td style="color:var(--red);font-weight:700">KShs ${(+d.commission).toLocaleString()}</td>
+      <td>${d.paid?'<b style="color:var(--green)">PAID ✓</b>':'<b style="color:var(--red)">PENDING</b>'}</td>
+      <td style="white-space:nowrap">${d.paid?"":`<button class="btn sm" onclick="markDeal('${d.id}')">✓ Paid</button> `}<button class="btn red sm" onclick="delDeal('${d.id}')">Del</button></td></tr>`;}).join("")||"<tr><td colspan=8 class='muted'>No deals yet.</td></tr>"}</table></div></div>
+    <div class="card"><h3 style="color:var(--green)">👥 Members</h3><div style="overflow:auto"><table>
+      <tr><th>Name</th><th>Phone</th><th>Role</th><th>Ref</th><th>Ref Owed</th><th>Paid</th><th>Actions</th></tr>
+      ${prof.map(u=>`<tr><td>${esc(u.name)}</td><td>${esc(u.phone)}</td><td>${u.role==="merchant"?"💼":"🛒"}</td><td>${esc(u.ref_code)}${u.referred_by?" ←"+esc(u.referred_by):""}</td><td>${+u.earnings?"KShs "+(+u.earnings).toLocaleString():"—"}</td>
+      <td>${mOf(u).paid?'<b style="color:var(--green)">YES</b>':'<b style="color:var(--red)">NO</b>'}</td>
+      <td style="white-space:nowrap">${(+u.earnings>0)?`<button class="btn sm" onclick="payRef('${u.id}','${u.earnings}')">💸 Pay Ref</button> `:""}<button class="btn ${mOf(u).paid?"red":""} sm" onclick="togglePaid('${u.id}',${!mOf(u).paid})">${mOf(u).paid?"Suspend":"Verify"}</button></td></tr>`).join("")||"<tr><td colspan=7 class='muted'>No members yet.</td></tr>"}</table></div></div>
+    <div class="card"><h3 style="color:var(--blue)">🧰 All Services</h3><div style="overflow:auto"><table>
+      <tr><th>Service</th><th>By</th><th>Price</th><th></th></tr>
+      ${svcs.map(s=>`<tr><td>${esc(s.title)}</td><td>${esc(s.merchant_name)}</td><td style="color:var(--red)">KShs ${(+s.price).toLocaleString()}</td><td><button class="btn red sm" onclick="delAnySvc('${s.id}')">Del</button></td></tr>`).join("")||"<tr><td colspan=4 class='muted'>None.</td></tr>"}</table></div></div>`;
+}
+async function verifyPay(uid,method){await sb.from("memberships").update({paid:true,method,updated_at:new Date().toISOString()}).eq("user_id",uid);renderAdmin();toast("✅ Verified & activated.");}
+async function togglePaid(uid,val){await sb.from("memberships").update({paid:val,updated_at:new Date().toISOString()}).eq("user_id",uid);renderAdmin();}
+async function markDeal(id){await sb.from("deals").update({paid:true}).eq("id",id);renderAdmin();}
+async function delDeal(id){if(confirm("Delete deal?")){await sb.from("deals").delete().eq("id",id);renderAdmin();}}
+async function delAnySvc(id){if(confirm("Delete this service?")){await sb.from("services").delete().eq("id",id);cache.services=null;renderAdmin();}}
+async function payRef(uid,amt){
+  const{data:u}=await sb.from("profiles").select("phone,earnings").eq("id",uid).single();
+  if(!confirm("Send KShs "+amt+" to "+(u?u.phone:"?")+" via M-Pesa now?"))return;
+  await sb.from("profiles").update({earnings:0}).eq("id",uid);renderAdmin();toast("Marked as paid.");
+}
+function csvMembers(){
+  (async()=>{const{data:pr}=await sb.from("profiles").select("*");const{data:mb}=await sb.from("memberships").select("*");
+  const rows=[["Name","Phone","Email","Role","RefCode","ReferredBy","RefOwed","Paid","Method"]].concat((pr||[]).map(u=>{const m=(mb||[]).find(x=>x.user_id===u.id)||{};return[u.name,u.phone,u.email,u.role,u.ref_code,u.referred_by||"",u.earnings||0,m.paid?"YES":"NO",m.method||""];}));
+  dlCSV(rows,"members.csv");})();
+}
+function csvDeals(){
+  (async()=>{const{data:ds}=await sb.from("deals").select("*,profiles(name,phone)");
+  const rows=[["Date","Merchant","Phone","Client","Job","Amount","Commission","Paid"]].concat((ds||[]).map(d=>[new Date(d.created_at).toLocaleDateString(),d.profiles?d.profiles.name:"",d.profiles?d.profiles.phone:"",d.client,d.job,d.amount,d.commission,d.paid?"YES":"NO"]));
+  dlCSV(rows,"deals.csv");})();
+}
+function dlCSV(rows,name){const csv=rows.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(",")).join("\n");
+  const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"}));a.download=name;a.click();}
+
+/* ---------- BOOT ---------- */
+const urlRef=new URLSearchParams(location.search).get("ref");
+if(urlRef){localStorage.setItem("slk_ref",urlRef.toUpperCase());authMode("reg");setTimeout(()=>{$("rRef").value=urlRef.toUpperCase();show("auth");},400);}
+(async function boot(){
+  if(SUPABASE_URL.includes("YOUR-REF")){toast("⚠️ Edit SUPABASE_URL and SUPABASE_ANON at the top of index.html first!");return;}
+  const{data:{session}}=await sb.auth.getSession();
+  if(session){await loadMe();
+    if(!isPaid()&&!me.is_admin){show("home");openPay();}else routeAfterAuth();
+  }else show("home");
+})();
+</script>
+</body>
+</html>
